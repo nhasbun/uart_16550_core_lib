@@ -1,6 +1,6 @@
 # UART 16550 Core Library
 
-Librería para hacer uso del módulo **UART 16550 Core** entregado por Altera para uso en sus chips FPGA. Está hecha para ser usada bajo linux en la plataforma **de10 nano** pero debería funcionar para múltiples dispositivos que trabajen con el mismo sistema de elementos mapeados a memoria en el **HPS**.
+**Wrapper** de librerías de Altera para hacer uso del módulo **UART 16550 Core** entregado para uso en sus chips FPGA. Está hecha para ser usada bajo linux en la plataforma **de10 nano** pero debería funcionar para múltiples dispositivos que trabajen con el mismo sistema de elementos mapeados a memoria en el **HPS**.
 
 ## Documentación UART 16550 Core ##
 
