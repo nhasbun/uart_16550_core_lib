@@ -85,17 +85,41 @@ void uart_config(UART * uart_p)
   else
     printf("%s\n", "Uart 16550 enabling FIFO tx interrupt: unrecognized error");
 
+  // Rx data signal and timeout
+  uart_p -> status = alt_16550_int_enable_rx(& uart_p -> uart_handle);
+  if(uart_p -> status == ALT_E_SUCCESS)
+    printf("%s\n", "Uart 16550 enabling FIFO rx interrupt: OK");
+  else if(uart_p -> status == ALT_E_ERROR)
+    printf("%s\n", "Uart 16550 enabling FIFO rx interrupt: ERROR");
+  else if(uart_p -> status == ALT_E_BAD_ARG)
+    printf("%s\n", "Uart 16550 enabling FIFO rx interrupt: BAD ARGUMENT");
+  else
+    printf("%s\n", "Uart 16550 enabling FIFO rx interrupt: unrecognized error");
+
+
   // Tx trigger event
   uart_p -> status = alt_16550_fifo_trigger_set_tx(& uart_p -> uart_handle,
-    ALT_16550_FIFO_TRIGGER_TX_ALMOST_EMPTY );
+    ALT_16550_FIFO_TRIGGER_TX_HALF_FULL);
   if(uart_p -> status == ALT_E_SUCCESS)
-    printf("%s\n", "SETTING FIFO TRIGGER ALMOST EMPTY");
+    printf("%s\n", "SETTING FIFO TRIGGER TX HALF FULL");
   else if(uart_p -> status == ALT_E_ERROR)
     printf("%s\n", "Uart 16550 fifo trigger: ERROR");
   else if(uart_p -> status == ALT_E_BAD_ARG)
     printf("%s\n", "Uart 16550 fifo trigger: BAD ARGUMENT");
   else
     printf("%s\n", "Uart 16550 fifo trigger: unrecognized error");
+
+  // Rx trigger event
+  uart_p -> status = alt_16550_fifo_trigger_set_rx(& uart_p -> uart_handle,
+    ALT_16550_FIFO_TRIGGER_RX_ANY);
+  if(uart_p -> status == ALT_E_SUCCESS)
+    printf("%s\n", "SETTING FIFO RX TRIGGER ANY DATA");
+  else if(uart_p -> status == ALT_E_ERROR)
+    printf("%s\n", "Uart 16550 fifo rx trigger: ERROR");
+  else if(uart_p -> status == ALT_E_BAD_ARG)
+    printf("%s\n", "Uart 16550 fifo rx trigger: BAD ARGUMENT");
+  else
+    printf("%s\n", "Uart 16550 fifo rx trigger: unrecognized error");
 
   // Enable UART after config
   uart_p -> status = alt_16550_enable(& uart_p -> uart_handle);
@@ -111,12 +135,15 @@ void uart_config(UART * uart_p)
 
 void uart_tx(UART * uart_p, char * buf, uint32_t len)
 {
+  // Uart transmission with self-made safe writing, to avoid buffer
+  // overrun
+
   // // Uart writing safe ** NOT WORKING
   // status = alt_16550_fifo_write_safe(&uart, "hola", 4, true);
   // if(status == ALT_E_SUCCESS) printf("%s\n", "4 bytes added to FIFO");
 
   // Uart writing not safe ** WORKING
-  uint8_t buf_aux_size = 100;
+  uint8_t buf_aux_size = 64;
 
   char * buf_aux = (char*)malloc(buf_aux_size * sizeof(char));
   int bytes_faltantes = len;
@@ -135,12 +162,34 @@ void uart_tx(UART * uart_p, char * buf, uint32_t len)
   }
 }
 
+bool uart_rx(UART * uart_p)
+{
+  char * buf = (char*)malloc(10 * sizeof(char));
+
+  if(check_rx_data(uart_p)) {
+    alt_16550_fifo_read(& uart_p -> uart_handle, buf, 1);
+    printf("%c", *buf);
+  }
+  return true;
+}
+
 bool check_tx_idle(UART * uart_p)
 {
   // Get int status
   ALT_16550_INT_STATUS_t int_status;
   alt_16550_int_status_get(& uart_p -> uart_handle, &int_status);
   if(int_status == ALT_16550_INT_STATUS_TX_IDLE)
+    return true;
+  else
+    return false;
+}
+
+bool check_rx_data(UART * uart_p)
+{
+  // Get int status
+  ALT_16550_INT_STATUS_t int_status;
+  alt_16550_int_status_get(& uart_p -> uart_handle, &int_status);
+  if(int_status == ALT_16550_INT_STATUS_RX_DATA)
     return true;
   else
     return false;
