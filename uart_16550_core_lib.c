@@ -99,9 +99,9 @@ void uart_config(UART * uart_p)
 
   // Tx trigger event
   uart_p -> status = alt_16550_fifo_trigger_set_tx(& uart_p -> uart_handle,
-    ALT_16550_FIFO_TRIGGER_TX_HALF_FULL);
+    ALT_16550_FIFO_TRIGGER_TX_EMPTY);
   if(uart_p -> status == ALT_E_SUCCESS)
-    printf("%s\n", "SETTING FIFO TRIGGER TX HALF FULL");
+    printf("%s\n", "SETTING FIFO TRIGGER TX EMPTY");
   else if(uart_p -> status == ALT_E_ERROR)
     printf("%s\n", "Uart 16550 fifo trigger: ERROR");
   else if(uart_p -> status == ALT_E_BAD_ARG)
@@ -143,7 +143,7 @@ void uart_tx(UART * uart_p, char * buf, uint32_t len)
   // if(status == ALT_E_SUCCESS) printf("%s\n", "4 bytes added to FIFO");
 
   // Uart writing not safe ** WORKING
-  uint8_t buf_aux_size = 64;
+  uint8_t buf_aux_size = 100;
 
   char * buf_aux = (char*)malloc(buf_aux_size * sizeof(char));
   int bytes_faltantes = len;
@@ -178,7 +178,8 @@ bool check_tx_idle(UART * uart_p)
   // Get int status
   ALT_16550_INT_STATUS_t int_status;
   alt_16550_int_status_get(& uart_p -> uart_handle, &int_status);
-  if(int_status == ALT_16550_INT_STATUS_TX_IDLE)
+  if (int_status == ALT_16550_INT_STATUS_TX_IDLE ||
+      int_status == ALT_16550_INT_STATUS_NONE)
     return true;
   else
     return false;
